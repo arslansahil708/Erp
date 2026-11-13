@@ -1,0 +1,87 @@
+@model Sale
+@{
+    var stores = (List<SelectListItem>)ViewBag.Stores;
+    var editor = (LineEditorModel)ViewBag.Editor;
+    ViewData["Title"] = "New Sale";
+}
+
+<h4 class="mb-3">New Sale</h4>
+
+<form method="post" asp-action="Create">
+    <div asp-validation-summary="All" class="alert alert-danger py-2"></div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Date &amp; Time</label>
+                    <input type="datetime-local" name="Date" class="form-control" value="@Model.Date.ToString("yyyy-MM-ddTHH:mm")" />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Store</label>
+                    <select name="StoreId" class="form-select">
+                        @foreach (var s in stores)
+                        {
+                            <option value="@s.Value" selected="@(s.Value == Model.StoreId.ToString())">@s.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Customer Name</label>
+                    <input type="text" name="CustomerName" class="form-control" value="@Model.CustomerName" maxlength="120" />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="form-check mt-4">
+                        <input type="checkbox" id="IsDelivery" name="IsDelivery" value="true" class="form-check-input" checked="@Model.IsDelivery" />
+                        <input type="hidden" name="IsDelivery" value="false" />
+                        <label class="form-check-label" for="IsDelivery">Home Delivery</label>
+                    </div>
+                </div>
+                <div class="col-md-9 mb-3">
+                    <label class="form-label">Delivery Address</label>
+                    <input type="text" name="DeliveryAddress" class="form-control" value="@Model.DeliveryAddress" maxlength="300" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <partial name="_LineEditor" model="editor" />
+
+    <div class="row justify-content-end mb-3">
+        <div class="col-md-4">
+            <div class="d-flex justify-content-between"><span>Sub Total</span><strong id="subTotal">0.00</strong></div>
+            <div class="d-flex justify-content-between align-items-center my-1">
+                <span>Discount</span>
+                <input type="number" step="any" min="0" name="Discount" id="discount" class="form-control form-control-sm w-50" value="@Model.Discount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+            </div>
+            <div class="d-flex justify-content-between fs-5"><span>Total</span><strong id="grandTotal">0.00</strong></div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Bill</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <script>
+        (function () {
+            var body = document.getElementById('lineBody');
+            var discount = document.getElementById('discount');
+
+            function recalc() {
+                var sub = 0;
+                Array.prototype.forEach.call(body.rows, function (tr) {
+                    var q = parseFloat(tr.querySelector('[data-f="Quantity"]').value) || 0;
+                    var p = parseFloat(tr.querySelector('[data-f="Amount"]').value) || 0;
+                    sub += q * p;
+                });
+                var d = parseFloat(discount.value) || 0;
+                document.getElementById('subTotal').textContent = sub.toFixed(2);
+                document.getElementById('grandTotal').textContent = (sub - d).toFixed(2);
+            }
+
+            document.addEventListener('input', recalc);
+            recalc();
+        })();
+    </script>
+}

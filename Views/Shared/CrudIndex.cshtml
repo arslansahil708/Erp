@@ -1,0 +1,55 @@
+@model System.Collections.IEnumerable
+@{
+    var type = (Type)ViewBag.EntityType;
+    var title = (string)ViewBag.PageTitle;
+    var allowDelete = (bool)ViewBag.AllowDelete;
+    var props = CrudViewHelper.ScalarProps(type);
+    var lookups = (Dictionary<string, List<SelectListItem>>)ViewBag.Lookups;
+    var idProp = type.GetProperty("Id")!;
+    ViewData["Title"] = title;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">@title</h4>
+    <a asp-action="Create" class="btn btn-primary">+ New</a>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped table-hover table-erp bg-white">
+        <thead>
+            <tr>
+                @foreach (var p in props.Where(x => x.Name != "Id"))
+                {
+                    <th>@CrudViewHelper.Label(p)</th>
+                }
+                <th style="width:140px"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model)
+            {
+                var id = idProp.GetValue(row);
+                <tr>
+                    @foreach (var p in props.Where(x => x.Name != "Id"))
+                    {
+                        <td>@CrudViewHelper.Format(p, row, lookups)</td>
+                    }
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@id" class="btn btn-sm btn-outline-primary">Edit</a>
+                        @if (allowDelete)
+                        {
+                            <form asp-action="Delete" asp-route-id="@id" method="post" class="d-inline" onsubmit="return confirm('Yeh record delete karein?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

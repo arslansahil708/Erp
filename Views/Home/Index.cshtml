@@ -1,0 +1,87 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    bool In(params string[] roles) => roles.Any(r => User.IsInRole(r));
+}
+
+<h4 class="mb-3">Welcome - Quick Options</h4>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card"><div class="card-body">
+            <div class="text-muted small">Today's Net Sales</div>
+            <div class="fs-4 fw-bold">@(((decimal)ViewBag.TodaySales).ToString("N2"))</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card"><div class="card-body">
+            <div class="text-muted small">Today's Bills</div>
+            <div class="fs-4 fw-bold">@ViewBag.TodayBills</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card"><div class="card-body">
+            <div class="text-muted small">Items / Stores</div>
+            <div class="fs-4 fw-bold">@ViewBag.ItemCount / @ViewBag.StoreCount</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card"><div class="card-body">
+            <div class="text-muted small">Active Employees</div>
+            <div class="fs-4 fw-bold">@ViewBag.EmployeeCount</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-3">
+    @if (In("Admin", "Accountant"))
+    {
+        <div class="col-6 col-md-4">
+            <a class="tile" asp-controller="Employees" asp-action="Index">Human Resource Management<small>Employees</small></a>
+        </div>
+    }
+    @if (In("Admin", "Accountant", "Sales"))
+    {
+        <div class="col-6 col-md-4">
+            <a class="tile" asp-controller="Sales" asp-action="Index">Secondary Sales<small>POS - Sales List</small></a>
+        </div>
+        <div class="col-6 col-md-4">
+            <a class="tile" asp-controller="Reports" asp-action="ReceivableAging">Account Receivable<small>Aging, Ledger, Receipts</small></a>
+        </div>
+    }
+    @if (In("Admin", "Accountant"))
+    {
+        <div class="col-6 col-md-4">
+            <a class="tile" asp-controller="Payrolls" asp-action="Index">Payroll<small>Monthly payroll</small></a>
+        </div>
+        <div class="col-6 col-md-4">
+            <a class="tile" asp-controller="Reports" asp-action="GLReport">General Ledger<small>GL Report</small></a>
+        </div>
+    }
+    @if (In("Admin", "Accountant", "Sales"))
+    {
+        <div class="col-6 col-md-4">
+            <a class="tile" asp-controller="PrimarySales" asp-action="Index">Primary Sales<small>Distributor invoices</small></a>
+        </div>
+    }
+    @if (In("Admin", "Store"))
+    {
+        <div class="col-6 col-md-4">
+            <a class="tile" asp-controller="StockDocuments" asp-action="Index" asp-route-type="GoodsReceive">Store Inventory &amp; Procurement<small>GRN, Transfers, Audit</small></a>
+        </div>
+        <div class="col-6 col-md-4">
+            <a class="tile" asp-controller="StockDocuments" asp-action="Index" asp-route-type="ProductionOrder">Production &amp; Planning<small>Production Orders</small></a>
+        </div>
+    }
+    @if (In("Admin", "Accountant"))
+    {
+        <div class="col-6 col-md-4">
+            <a class="tile" asp-controller="PettyCash" asp-action="Index">Account Payable<small>Petty Cash</small></a>
+        </div>
+    }
+    @if (In("Admin"))
+    {
+        <div class="col-6 col-md-4">
+            <a class="tile" asp-controller="Users" asp-action="Index">Users &amp; Roles<small>Login management</small></a>
+        </div>
+    }
+</div>

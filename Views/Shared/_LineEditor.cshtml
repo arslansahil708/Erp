@@ -1,0 +1,97 @@
+@model LineEditorModel
+
+<table class="table table-sm bg-white">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th style="width:160px">Quantity</th>
+            <th style="width:160px">@Model.AmountLabel</th>
+            <th style="width:50px"></th>
+        </tr>
+    </thead>
+    <tbody id="lineBody"></tbody>
+</table>
+<button type="button" class="btn btn-sm btn-outline-primary mb-3" id="addLine">+ Add line</button>
+
+<script>
+    (function () {
+        var items = @Json.Serialize(Model.Items);
+        var existing = @Json.Serialize(Model.Rows);
+        var amountField = '@Model.AmountField';
+        var body = document.getElementById('lineBody');
+
+        function input(field, value) {
+            var el = document.createElement('input');
+            el.type = 'number';
+            el.step = 'any';
+            el.className = 'form-control form-control-sm';
+            el.dataset.f = field;
+            if (value !== undefined && value !== null && value !== 0) el.value = value;
+            return el;
+        }
+
+        function addRow(r) {
+            r = r || {};
+            var tr = document.createElement('tr');
+
+            var tdItem = document.createElement('td');
+            var sel = document.createElement('select');
+            sel.className = 'form-select form-select-sm';
+            sel.dataset.f = 'ItemId';
+            sel.add(new Option('-- select item --', ''));
+            items.forEach(function (i) { sel.add(new Option(i.text, i.value)); });
+            if (r.itemId) sel.value = String(r.itemId);
+            tdItem.appendChild(sel);
+
+            var tdQty = document.createElement('td');
+            var qty = input('Quantity', r.quantity);
+            tdQty.appendChild(qty);
+
+            var tdAmt = document.createElement('td');
+            var amt = input('Amount', r.amount);
+            tdAmt.appendChild(amt);
+
+            sel.addEventListener('change', function () {
+                var found = items.find(function (i) { return i.value === sel.value; });
+                if (found && (!amt.value || Number(amt.value) === 0)) amt.value = found.defaultAmount;
+                if (!qty.value) qty.value = 1;
+                reindex();
+                body.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+
+            var tdDel = document.createElement('td');
+            var del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'btn btn-sm btn-outline-danger';
+            del.textContent = 'x';
+            del.addEventListener('click', function () {
+                tr.remove();
+                reindex();
+                body.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+            tdDel.appendChild(del);
+
+            tr.appendChild(tdItem);
+            tr.appendChild(tdQty);
+            tr.appendChild(tdAmt);
+            tr.appendChild(tdDel);
+            body.appendChild(tr);
+            reindex();
+        }
+
+        // MVC binding ke liye Lines[0], Lines[1] ... continuous index chahiye
+        function reindex() {
+            Array.prototype.forEach.call(body.rows, function (tr, i) {
+                tr.querySelectorAll('[data-f]').forEach(function (el) {
+                    var f = el.dataset.f === 'Amount' ? amountField : el.dataset.f;
+                    el.name = 'Lines[' + i + '].' + f;
+                });
+            });
+        }
+
+        document.getElementById('addLine').addEventListener('click', function () { addRow(); });
+        body.closest('form').addEventListener('submit', reindex);
+
+        if (existing.length) existing.forEach(addRow); else addRow();
+    })();
+</script>

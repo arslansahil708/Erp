@@ -1,0 +1,61 @@
+@model List<Sale>
+@{
+    ViewData["Title"] = "Sales List";
+    var isAdmin = User.IsInRole("Admin");
+    var canCreate = isAdmin || User.IsInRole("Sales");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Sales List <small class="text-muted fs-6">(latest 200)</small></h4>
+    <div class="d-flex gap-2">
+        @if (isAdmin)
+        {
+            <form asp-action="PostPending" method="post" onsubmit="return confirm('Jin purane bills ki GL entry nahi hai unhein GL mein post karein?');">
+                <button type="submit" class="btn btn-outline-secondary">Post old bills to GL</button>
+            </form>
+        }
+        @if (canCreate)
+        {
+            <a asp-action="Create" class="btn btn-primary">+ New Sale</a>
+        }
+    </div>
+</div>
+
+@if (TempData["Msg"] != null)
+{
+    <div class="alert alert-success py-2">@TempData["Msg"]</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped table-hover table-erp bg-white">
+        <thead>
+            <tr>
+                <th>Bill No</th><th>Date</th><th>Customer</th><th>Store</th><th>Delivery</th>
+                <th class="text-end">Discount</th><th class="text-end">Total</th><th style="width:150px"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td>@s.BillNo</td>
+                    <td>@s.Date.ToString("dd-MMM-yyyy HH:mm")</td>
+                    <td>@s.CustomerName</td>
+                    <td>@s.Store?.Name</td>
+                    <td>@(s.IsDelivery ? "Yes" : "No")</td>
+                    <td class="text-end">@s.Discount.ToString("N2")</td>
+                    <td class="text-end">@s.Total.ToString("N2")</td>
+                    <td class="text-end">
+                        <a asp-action="Details" asp-route-id="@s.Id" class="btn btn-sm btn-outline-primary">View</a>
+                        @if (isAdmin)
+                        {
+                            <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="d-inline" onsubmit="return confirm('Yeh bill delete karein? GL entries bhi hat jayengi.');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

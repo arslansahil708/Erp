@@ -1,0 +1,83 @@
+@using System.Globalization
+@model object
+@{
+    var type = (Type)ViewBag.EntityType;
+    var mode = (string)ViewBag.Mode;
+    var props = CrudViewHelper.FormProps(type);
+    var lookups = (Dictionary<string, List<SelectListItem>>)ViewBag.Lookups;
+    var id = type.GetProperty("Id")!.GetValue(Model);
+    var heading = (mode == "create" ? "New " : "Edit ") + (string)ViewBag.PageTitle;
+    ViewData["Title"] = heading;
+}
+
+<h4 class="mb-3">@heading</h4>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+            <input type="hidden" name="Id" value="@id" />
+
+            <div class="row">
+                @foreach (var p in props)
+                {
+                    var pt = Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType;
+                    var isNullable = Nullable.GetUnderlyingType(p.PropertyType) != null;
+                    var val = p.GetValue(Model);
+                    var text = val is IFormattable fmt ? fmt.ToString(null, CultureInfo.InvariantCulture) : val?.ToString() ?? "";
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">@CrudViewHelper.Label(p)</label>
+
+                        @if (lookups.TryGetValue(p.Name, out var options))
+                        {
+                            <select name="@p.Name" class="form-select">
+                                @if (isNullable)
+                                {
+                                    <option value="">-- None --</option>
+                                }
+                                @foreach (var o in options)
+                                {
+                                    <option value="@o.Value" selected="@(o.Value == text)">@o.Text</option>
+                                }
+                            </select>
+                        }
+                        else if (pt.IsEnum)
+                        {
+                            <select name="@p.Name" class="form-select">
+                                @foreach (var name in Enum.GetNames(pt))
+                                {
+                                    <option value="@name" selected="@(name == val?.ToString())">@name</option>
+                                }
+                            </select>
+                        }
+                        else if (pt == typeof(bool))
+                        {
+                            <div class="form-check">
+                                <input type="checkbox" name="@p.Name" value="true" class="form-check-input" checked="@((bool)(val ?? false))" />
+                                <input type="hidden" name="@p.Name" value="false" />
+                            </div>
+                        }
+                        else if (pt == typeof(DateTime))
+                        {
+                            <input type="date" name="@p.Name" class="form-control" value="@(val is DateTime d ? d.ToString("yyyy-MM-dd") : "")" />
+                        }
+                        else if (pt == typeof(decimal) || pt == typeof(double) || pt == typeof(float) || pt == typeof(int) || pt == typeof(long))
+                        {
+                            <input type="number" step="any" name="@p.Name" class="form-control" value="@text" />
+                        }
+                        else
+                        {
+                            <input type="text" name="@p.Name" class="form-control" value="@text" />
+                        }
+
+                        @Html.ValidationMessage(p.Name, new { @class = "text-danger small" })
+                    </div>
+                }
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>

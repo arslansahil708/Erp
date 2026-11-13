@@ -1,0 +1,51 @@
+@model UserFormViewModel
+@{
+    var isEdit = Model.Id > 0;
+    var rd = new Dictionary<string, string>();
+    if (isEdit) rd["id"] = Model.Id.ToString();
+    ViewData["Title"] = isEdit ? "Edit User" : "New User";
+}
+
+<h4 class="mb-3">@ViewData["Title"]</h4>
+
+<div class="card" style="max-width:560px">
+    <div class="card-body">
+        <form method="post" asp-action="@(isEdit ? "Edit" : "Create")" asp-all-route-data="rd">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <input type="text" name="UserName" class="form-control" value="@Model.UserName" maxlength="50" readonly="@isEdit" />
+                @Html.ValidationMessage("UserName", new { @class = "text-danger small" })
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Full Name</label>
+                <input type="text" name="FullName" class="form-control" value="@Model.FullName" maxlength="120" />
+                @Html.ValidationMessage("FullName", new { @class = "text-danger small" })
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Role</label>
+                <select name="Role" class="form-select">
+                    @foreach (var r in Enum.GetValues<UserRole>())
+                    {
+                        <option value="@r" selected="@(r == Model.Role)">@r</option>
+                    }
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">@(isEdit ? "New Password (if you want to change it)" : "Password")</label>
+                <input type="password" name="Password" class="form-control" autocomplete="new-password" />
+                @Html.ValidationMessage("Password", new { @class = "text-danger small" })
+                <div class="form-text">At least 8 characters, including one letter and one number..</div>
+            </div>
+            <div class="form-check mb-3">
+                <input type="checkbox" id="IsActive" name="IsActive" value="true" class="form-check-input" checked="@Model.IsActive" />
+                <input type="hidden" name="IsActive" value="false" />
+                <label class="form-check-label" for="IsActive">Active</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>

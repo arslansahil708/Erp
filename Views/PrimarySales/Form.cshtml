@@ -1,0 +1,91 @@
+@model PrimarySale
+@{
+    var customers = (List<SelectListItem>)ViewBag.Customers;
+    var stores = (List<SelectListItem>)ViewBag.Stores;
+    var editor = (LineEditorModel)ViewBag.Editor;
+    var isEdit = Model.Id > 0;
+    var rd = new Dictionary<string, string>();
+    if (isEdit) rd["id"] = Model.Id.ToString();
+    ViewData["Title"] = isEdit ? "Edit Primary Sale " + Model.InvoiceNo : "New Primary Sale";
+}
+
+<h4 class="mb-1">@ViewData["Title"]</h4>
+<p class="text-muted">Distributor / dealer ko credit par sale. Stock kam hoga aur customer ka receivable barhega.</p>
+
+<form method="post" asp-action="@(isEdit ? "Edit" : "Create")" asp-all-route-data="rd">
+    <div asp-validation-summary="All" class="alert alert-danger py-2"></div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Date</label>
+                    <input type="date" name="Date" class="form-control" value="@Model.Date.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-5 mb-3">
+                    <label class="form-label">Customer</label>
+                    <select name="CustomerId" class="form-select">
+                        <option value="">-- select customer --</option>
+                        @foreach (var c in customers)
+                        {
+                            <option value="@c.Value" selected="@(c.Value == Model.CustomerId.ToString())">@c.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Store (maal yahan se jayega)</label>
+                    <select name="StoreId" class="form-select">
+                        @foreach (var s in stores)
+                        {
+                            <option value="@s.Value" selected="@(s.Value == Model.StoreId.ToString())">@s.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Remarks</label>
+                    <input type="text" name="Remarks" class="form-control" value="@Model.Remarks" maxlength="300" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <partial name="_LineEditor" model="editor" />
+
+    <div class="row justify-content-end mb-3">
+        <div class="col-md-4">
+            <div class="d-flex justify-content-between"><span>Sub Total</span><strong id="subTotal">0.00</strong></div>
+            <div class="d-flex justify-content-between align-items-center my-1">
+                <span>Discount</span>
+                <input type="number" step="any" min="0" name="Discount" id="discount" class="form-control form-control-sm w-50" value="@Model.Discount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+            </div>
+            <div class="d-flex justify-content-between fs-5"><span>Total</span><strong id="grandTotal">0.00</strong></div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Invoice</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <script>
+        (function () {
+            var body = document.getElementById('lineBody');
+            var discount = document.getElementById('discount');
+
+            function recalc() {
+                var sub = 0;
+                Array.prototype.forEach.call(body.rows, function (tr) {
+                    var q = parseFloat(tr.querySelector('[data-f="Quantity"]').value) || 0;
+                    var p = parseFloat(tr.querySelector('[data-f="Amount"]').value) || 0;
+                    sub += q * p;
+                });
+                var d = parseFloat(discount.value) || 0;
+                document.getElementById('subTotal').textContent = sub.toFixed(2);
+                document.getElementById('grandTotal').textContent = (sub - d).toFixed(2);
+            }
+
+            document.addEventListener('input', recalc);
+            recalc();
+        })();
+    </script>
+}

@@ -1,0 +1,132 @@
+@using System.Text.RegularExpressions
+@model ReportViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    var action = (string)ViewContext.RouteData.Values["action"]!;
+    var numeric = new Regex(@"^-?[\d,]*\.?\d+%?$");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">@Model.Title</h4>
+    <div class="no-print">
+        @if (Model.BackUrl != null)
+        {
+            <a href="@Model.BackUrl" class="btn btn-outline-primary">&larr; Back</a>
+        }
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">Print</button>
+    </div>
+</div>
+
+<form method="get" asp-controller="Reports" asp-action="@action" class="row g-2 align-items-end mb-3 no-print">
+    @if (Model.Back != null)
+    {
+        <input type="hidden" name="back" value="@Model.Back" />
+    }
+    @if (Model.ShowFrom)
+    {
+        <div class="col-auto">
+            <label class="form-label mb-0">@Model.FromLabel</label>
+            <input type="date" name="from" class="form-control" value="@Model.From.ToString("yyyy-MM-dd")" />
+        </div>
+    }
+    @if (Model.ShowTo)
+    {
+        <div class="col-auto">
+            <label class="form-label mb-0">To</label>
+            <input type="date" name="to" class="form-control" value="@Model.To.ToString("yyyy-MM-dd")" />
+        </div>
+    }
+    @if (Model.ShowText)
+    {
+        <div class="col-auto">
+            <label class="form-label mb-0">@Model.TextLabel</label>
+            <input type="text" name="q" class="form-control" value="@Model.Q" />
+        </div>
+    }
+    @if (Model.Stores != null)
+    {
+        <div class="col-auto">
+            <label class="form-label mb-0">Store</label>
+            <select name="storeId" class="form-select">
+                <option value="">-- All Stores --</option>
+                @foreach (var s in Model.Stores)
+                {
+                    <option value="@s.Value" selected="@(s.Value == Model.StoreId?.ToString())">@s.Text</option>
+                }
+            </select>
+        </div>
+    }
+    @if (Model.Accounts != null)
+    {
+        <div class="col-auto">
+            <label class="form-label mb-0">Account</label>
+            <select name="accountId" class="form-select">
+                <option value="">-- All Accounts --</option>
+                @foreach (var a in Model.Accounts)
+                {
+                    <option value="@a.Value" selected="@(a.Value == Model.AccountId?.ToString())">@a.Text</option>
+                }
+            </select>
+        </div>
+    }
+    @if (Model.Customers != null)
+    {
+        <div class="col-auto">
+            <label class="form-label mb-0">Customer</label>
+            <select name="customerId" class="form-select">
+                <option value="">-- Select Customer --</option>
+                @foreach (var c in Model.Customers)
+                {
+                    <option value="@c.Value" selected="@(c.Value == Model.CustomerId?.ToString())">@c.Text</option>
+                }
+            </select>
+        </div>
+    }
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Show</button>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped table-erp bg-white">
+        <thead>
+            <tr>
+                @foreach (var c in Model.Columns)
+                {
+                    <th>@c</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.Rows)
+            {
+                <tr>
+                    @foreach (var cell in row)
+                    {
+                        <td class="@(numeric.IsMatch(cell) ? "text-end" : "")">@cell</td>
+                    }
+                </tr>
+            }
+            @if (Model.Rows.Count == 0)
+            {
+                <tr><td colspan="@Model.Columns.Count" class="text-center text-muted py-4">Is range mein koi data nahi mila.</td></tr>
+            }
+        </tbody>
+        @if (Model.Footer != null)
+        {
+            <tfoot>
+                <tr>
+                    @foreach (var cell in Model.Footer)
+                    {
+                        <td class="@(numeric.IsMatch(cell) ? "text-end" : "")">@cell</td>
+                    }
+                </tr>
+            </tfoot>
+        }
+    </table>
+</div>
+
+@foreach (var note in Model.Notes)
+{
+    <p class="text-muted small mb-1">@note</p>
+}
